@@ -5,7 +5,7 @@ import {
   FeedbackMsqResponseDetails,
   FeedbackParticipantType,
 } from '../../../../../types/api-output';
-import { MSQ_ANSWER_NONE_OF_THE_ABOVE } from '../../../../../types/feedback-response-details';
+import { MSQ_ANSWER_NONE_OF_THE_ABOVE, NO_VALUE } from '../../../../../types/feedback-response-details';
 import { QuestionStatistics } from '../question-statistics';
 
 /**
@@ -55,24 +55,31 @@ export class MsqQuestionStatisticsCalculation
     if (this.question.hasAssignedWeights) {
       for (let i: number = 0; i < this.question.msqChoices.length; i += 1) {
         const option: string = this.question.msqChoices[i];
-        const weight: number = this.question.msqWeights[i];
-        this.weightPerOption[option] = weight;
+        const weight: number | null = this.question.msqWeights[i];
+        this.weightPerOption[option] = weight === null ? 0 : weight;
       }
       if (this.question.otherEnabled) {
-        this.weightPerOption['Other'] = this.question.msqOtherWeight;
+        this.weightPerOption['Other'] = this.question.msqOtherWeight === null ? 0 : this.question.msqOtherWeight;
       }
 
+      // Calculate total weighted response count, only including non-null weights
       let totalWeightedResponseCount: number = 0;
       for (const answer of Object.keys(this.answerFrequency)) {
-        const weight: number = this.weightPerOption[answer];
-        const weightedAnswer: number = weight * this.answerFrequency[answer];
-        totalWeightedResponseCount += weightedAnswer;
+        const weight: number | null = answer === 'Other' 
+          ? this.question.msqOtherWeight 
+          : this.question.msqWeights[this.question.msqChoices.indexOf(answer)];
+        if (weight !== null) {
+          const weightedAnswer: number = weight * this.answerFrequency[answer];
+          totalWeightedResponseCount += weightedAnswer;
+        }
       }
 
       for (const answer of Object.keys(this.weightPerOption)) {
-        const weight: number = this.weightPerOption[answer];
+        const weight: number | null = answer === 'Other' 
+          ? this.question.msqOtherWeight 
+          : this.question.msqWeights[this.question.msqChoices.indexOf(answer)];
         const frequency: number = this.answerFrequency[answer];
-        const weightedPercentage: number = totalWeightedResponseCount === 0 ? 0
+        const weightedPercentage: number = weight === null || totalWeightedResponseCount === 0 ? 0
             : 100 * ((frequency * weight) / totalWeightedResponseCount);
         this.weightedPercentagePerOption[answer] = +weightedPercentage.toFixed(2);
       }
@@ -123,17 +130,26 @@ export class MsqQuestionStatisticsCalculation
       let numOfResponsesForRecipient: number = 0;
       for (const answer of Object.keys(responses)) {
         const responseCount: number = responses[answer];
-        const weight: number = this.weightPerOption[answer];
-        total += responseCount * weight;
-        numOfResponsesForRecipient += responseCount;
+        const weight: number | null = answer === 'Other' 
+          ? this.question.msqOtherWeight 
+          : this.question.msqWeights[this.question.msqChoices.indexOf(answer)];
+        if (weight !== null) {
+          total += responseCount * weight;
+          numOfResponsesForRecipient += responseCount;
+        }
       }
-      average = numOfResponsesForRecipient ? total / numOfResponsesForRecipient : 0;
+      // Only compute average if there are responses with non-null weights
+      if (numOfResponsesForRecipient === 0) {
+        average = NO_VALUE;
+      } else {
+        average = total / numOfResponsesForRecipient;
+      }
 
       this.perRecipientResponses[recipient] = {
         recipient: recipientNames[recipient],
         recipientEmail: recipientEmails[recipient],
         total: +total.toFixed(5),
-        average: +average.toFixed(2),
+        average: average === NO_VALUE ? NO_VALUE : +average.toFixed(2),
         recipientTeam: recipientToTeam[recipient],
         responses: perRecipientResponse[recipient],
       };

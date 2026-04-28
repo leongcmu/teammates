@@ -3,6 +3,7 @@ import {
   MsqQuestionStatisticsCalculation,
 } from './question-statistics-calculation/msq-question-statistics-calculation';
 import { DEFAULT_MSQ_QUESTION_DETAILS } from '../../../../types/default-question-structs';
+import { NO_VALUE } from '../../../../types/feedback-response-details';
 import { SortBy } from '../../../../types/sort-properties';
 import { ColumnData, SortableTableCellData, SortableTableComponent } from '../../sortable-table/sortable-table.component';
 
@@ -85,7 +86,7 @@ export class MsqQuestionStatisticsComponent extends MsqQuestionStatisticsCalcula
           };
         }),
         { value: (this.perRecipientResponses[key].total).toFixed(2) },
-        { value: (this.perRecipientResponses[key].average).toFixed(2) },
+        { value: this.perRecipientResponses[key].average === NO_VALUE ? '-' : (this.perRecipientResponses[key].average).toFixed(2) },
       ];
     });
   }

@@ -21,8 +21,8 @@ export class FeedbackMsqQuestionDetailsImpl extends AbstractFeedbackMcqMsqQuesti
   maxSelectableChoices: number = NO_VALUE;
   minSelectableChoices: number = NO_VALUE;
   hasAssignedWeights: boolean = false;
-  msqWeights: number[] = [];
-  msqOtherWeight: number = 0;
+  msqWeights: (number | null)[] = [];
+  msqOtherWeight: number | null = null;
   questionText: string = '';
   questionType: FeedbackQuestionType = FeedbackQuestionType.MSQ;
 

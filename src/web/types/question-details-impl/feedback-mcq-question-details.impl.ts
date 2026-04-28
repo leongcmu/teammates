@@ -15,8 +15,8 @@ export class FeedbackMcqQuestionDetailsImpl extends AbstractFeedbackMcqMsqQuesti
     implements FeedbackMcqQuestionDetails {
 
   hasAssignedWeights: boolean = false;
-  mcqWeights: number[] = [];
-  mcqOtherWeight: number = 0;
+  mcqWeights: (number | null)[] = [];
+  mcqOtherWeight: number | null = null;
   mcqChoices: string[] = [];
   otherEnabled: boolean = false;
   questionDropdownEnabled: boolean = false;

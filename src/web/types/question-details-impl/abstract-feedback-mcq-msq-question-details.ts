@@ -2,6 +2,7 @@ import { AbstractFeedbackQuestionDetails } from './abstract-feedback-question-de
 import {
   McqMsqQuestionStatisticsCalculation,
 } from '../../app/components/question-types/question-statistics/question-statistics-calculation/mcq-msq-question-statistics-calculation';
+import { NO_VALUE } from '../feedback-response-details';
 
 /**
  * Abstract class for MCQ/MSQ question detail.
@@ -57,7 +58,7 @@ export abstract class AbstractFeedbackMcqMsqQuestionDetails extends AbstractFeed
         ...Object.keys(statsCalculation.weightPerOption)
             .map((choice: string) => String(recipientResponses.responses[choice])),
         String(recipientResponses.total),
-        String(recipientResponses.average),
+        String(recipientResponses.average === NO_VALUE ? '-' : recipientResponses.average),
       ]);
     });
 

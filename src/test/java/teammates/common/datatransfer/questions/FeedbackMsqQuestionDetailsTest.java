@@ -506,4 +506,52 @@ public class FeedbackMsqQuestionDetailsTest extends BaseTestCase {
 
         assertFalse(msqDetails.shouldChangesRequireResponseDeletion(newMsqDetails));
     }
+
+    @Test
+    public void testValidateQuestionDetails_nullWeightsMixed_noErrorReturned() {
+        FeedbackMsqQuestionDetails msqDetails = new FeedbackMsqQuestionDetails();
+        msqDetails.setMsqChoices(Arrays.asList("Choice 1", "Choice 2"));
+        msqDetails.setMsqWeights(Arrays.asList(1.22, null));
+        msqDetails.setHasAssignedWeights(true);
+
+        List<String> errors = msqDetails.validateQuestionDetails();
+        assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void testValidateQuestionDetails_allNullWeights_noErrorReturned() {
+        FeedbackMsqQuestionDetails msqDetails = new FeedbackMsqQuestionDetails();
+        msqDetails.setMsqChoices(Arrays.asList("Choice 1", "Choice 2"));
+        msqDetails.setMsqWeights(Arrays.asList(null, null));
+        msqDetails.setHasAssignedWeights(true);
+        msqDetails.setMsqOtherWeight(null);
+
+        List<String> errors = msqDetails.validateQuestionDetails();
+        assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void testValidateQuestionDetails_nullOtherWeight_noErrorReturned() {
+        FeedbackMsqQuestionDetails msqDetails = new FeedbackMsqQuestionDetails();
+        msqDetails.setMsqChoices(Arrays.asList("Choice 1", "Choice 2"));
+        msqDetails.setMsqWeights(Arrays.asList(1.22, 1.55));
+        msqDetails.setHasAssignedWeights(true);
+        msqDetails.setOtherEnabled(true);
+        msqDetails.setMsqOtherWeight(null);
+
+        List<String> errors = msqDetails.validateQuestionDetails();
+        assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void testValidateQuestionDetails_nullWeightWithNegativeWeight_errorReturned() {
+        FeedbackMsqQuestionDetails msqDetails = new FeedbackMsqQuestionDetails();
+        msqDetails.setMsqChoices(Arrays.asList("Choice 1", "Choice 2"));
+        msqDetails.setMsqWeights(Arrays.asList(-1.0, null));
+        msqDetails.setHasAssignedWeights(true);
+
+        List<String> errors = msqDetails.validateQuestionDetails();
+        assertEquals(1, errors.size());
+        assertEquals(FeedbackMsqQuestionDetails.MSQ_ERROR_INVALID_WEIGHT, errors.get(0));
+    }
 }

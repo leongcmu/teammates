@@ -3,6 +3,7 @@ import {
   McqQuestionStatisticsCalculation,
 } from './question-statistics-calculation/mcq-question-statistics-calculation';
 import { DEFAULT_MCQ_QUESTION_DETAILS } from '../../../../types/default-question-structs';
+import { NO_VALUE } from '../../../../types/feedback-response-details';
 import { SortBy } from '../../../../types/sort-properties';
 import {
   ColumnData,
@@ -89,7 +90,7 @@ export class McqQuestionStatisticsComponent extends McqQuestionStatisticsCalcula
           };
         }),
         { value: (this.perRecipientResponses[key].total).toFixed(2) },
-        { value: (this.perRecipientResponses[key].average).toFixed(2) },
+        { value: this.perRecipientResponses[key].average === NO_VALUE ? '-' : (this.perRecipientResponses[key].average).toFixed(2) },
       ];
     });
   }

@@ -1,6 +1,7 @@
 import { Directive } from '@angular/core';
 import { McqMsqQuestionStatisticsCalculation } from './mcq-msq-question-statistics-calculation';
 import { FeedbackMcqQuestionDetails, FeedbackMcqResponseDetails } from '../../../../../types/api-output';
+import { NO_VALUE } from '../../../../../types/feedback-response-details';
 import { QuestionStatistics } from '../question-statistics';
 
 /**
@@ -45,24 +46,34 @@ export class McqQuestionStatisticsCalculation
     if (this.question.hasAssignedWeights) {
       for (let i: number = 0; i < this.question.mcqChoices.length; i += 1) {
         const option: string = this.question.mcqChoices[i];
-        const weight: number = this.question.mcqWeights[i];
-        this.weightPerOption[option] = weight;
+        const weight: number | null = this.question.mcqWeights[i];
+        this.weightPerOption[option] = weight === null ? 0 : weight;
       }
       if (this.question.otherEnabled) {
-        this.weightPerOption['Other'] = this.question.mcqOtherWeight;
+        this.weightPerOption['Other'] = this.question.mcqOtherWeight === null ? 0 : this.question.mcqOtherWeight;
       }
 
+      // Calculate total weighted response count, only including non-null weights
       let totalWeightedResponseCount: number = 0;
       for (const answer of Object.keys(this.answerFrequency)) {
-        const weight: number = this.weightPerOption[answer];
-        const weightedAnswer: number = weight * this.answerFrequency[answer];
-        totalWeightedResponseCount += weightedAnswer;
+        const weight: number | null = this.question.mcqWeights[this.question.mcqChoices.indexOf(answer)];
+        if (answer === 'Other') {
+          if (this.question.otherEnabled && this.question.mcqOtherWeight !== null) {
+            const weightedAnswer: number = this.question.mcqOtherWeight * this.answerFrequency[answer];
+            totalWeightedResponseCount += weightedAnswer;
+          }
+        } else if (weight !== null) {
+          const weightedAnswer: number = weight * this.answerFrequency[answer];
+          totalWeightedResponseCount += weightedAnswer;
+        }
       }
 
       for (const answer of Object.keys(this.weightPerOption)) {
-        const weight: number = this.weightPerOption[answer];
-        const frequency: number = this.answerFrequency[answer];
-        const weightedPercentage: number = totalWeightedResponseCount === 0 ? 0
+        const weight: number | null = answer === 'Other' 
+          ? this.question.mcqOtherWeight 
+          : this.question.mcqWeights[this.question.mcqChoices.indexOf(answer)];
+        const frequency: number = this.answerFrequency[answer] || 0;
+        const weightedPercentage: number = weight === null || totalWeightedResponseCount === 0 ? 0
             : 100 * ((frequency * weight) / totalWeightedResponseCount);
         this.weightedPercentagePerOption[answer] = +weightedPercentage.toFixed(2);
       }
@@ -101,17 +112,26 @@ export class McqQuestionStatisticsCalculation
         let numOfResponsesForRecipient: number = 0;
         for (const answer of Object.keys(responses)) {
           const responseCount: number = responses[answer];
-          const weight: number = this.weightPerOption[answer];
-          total += responseCount * weight;
-          numOfResponsesForRecipient += responseCount;
+          const weight: number | null = answer === 'Other' 
+            ? this.question.mcqOtherWeight 
+            : this.question.mcqWeights[this.question.mcqChoices.indexOf(answer)];
+          if (weight !== null) {
+            total += responseCount * weight;
+            numOfResponsesForRecipient += responseCount;
+          }
         }
-        average = numOfResponsesForRecipient ? total / numOfResponsesForRecipient : 0;
+        // Only compute average if there are responses with non-null weights
+        if (numOfResponsesForRecipient === 0) {
+          average = NO_VALUE;
+        } else {
+          average = total / numOfResponsesForRecipient;
+        }
 
         this.perRecipientResponses[recipient] = {
           recipient,
           recipientEmail: recipientEmails[recipient],
           total: +total.toFixed(5),
-          average: +average.toFixed(2),
+          average: average === NO_VALUE ? NO_VALUE : +average.toFixed(2),
           recipientTeam: recipientToTeam[recipient],
           responses: perRecipientResponse[recipient],
         };

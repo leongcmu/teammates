@@ -204,10 +204,10 @@ public class FeedbackQuestionData extends ApiOutput {
     public void hideInformationForStudent() {
         if (questionDetails instanceof FeedbackMcqQuestionDetails) {
             ((FeedbackMcqQuestionDetails) questionDetails).setMcqWeights(Collections.emptyList());
-            ((FeedbackMcqQuestionDetails) questionDetails).setMcqOtherWeight(0);
+            ((FeedbackMcqQuestionDetails) questionDetails).setMcqOtherWeight(null);
         } else if (questionDetails instanceof FeedbackMsqQuestionDetails) {
             ((FeedbackMsqQuestionDetails) questionDetails).setMsqWeights(Collections.emptyList());
-            ((FeedbackMsqQuestionDetails) questionDetails).setMsqOtherWeight(0);
+            ((FeedbackMsqQuestionDetails) questionDetails).setMsqOtherWeight(null);
         } else if (questionDetails instanceof FeedbackRubricQuestionDetails) {
             ((FeedbackRubricQuestionDetails) questionDetails)
                     .setRubricWeightsForEachCell(Collections.singletonList(Collections.emptyList()));

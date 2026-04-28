@@ -59,7 +59,7 @@ export class McqQuestionEditDetailsFormComponent
       return;
     }
 
-    const newWeights: number[] = this.model.mcqWeights.slice();
+    const newWeights: (number | null)[] = this.model.mcqWeights.slice();
     const newOptions: string[] = this.model.mcqChoices.slice();
     moveItemInArray(newOptions, event.previousIndex, event.currentIndex);
     moveItemInArray(newWeights, event.previousIndex, event.currentIndex);
@@ -78,8 +78,8 @@ export class McqQuestionEditDetailsFormComponent
     newOptions.push('');
     fieldsToUpdate.mcqChoices = newOptions;
     if (this.model.hasAssignedWeights) {
-      const newWeights: number[] = this.model.mcqWeights.slice();
-      newWeights.push(0);
+      const newWeights: (number | null)[] = this.model.mcqWeights.slice();
+      newWeights.push(null);
       fieldsToUpdate.mcqWeights = newWeights;
     }
     this.triggerModelChangeBatch(fieldsToUpdate);
@@ -94,7 +94,7 @@ export class McqQuestionEditDetailsFormComponent
     newOptions.splice(event, 1);
     fieldsToUpdate.mcqChoices = newOptions;
     if (this.model.hasAssignedWeights) {
-      const newWeights: number[] = this.model.mcqWeights.slice();
+      const newWeights: (number | null)[] = this.model.mcqWeights.slice();
       newWeights.splice(event, 1);
       fieldsToUpdate.mcqWeights = newWeights;
     }
@@ -113,8 +113,8 @@ export class McqQuestionEditDetailsFormComponent
   /**
    * Displays new Mcq weight at specified index.
    */
-  onMcqWeightEntered(event: number, index: number): void {
-    const newWeights: number[] = this.model.mcqWeights.slice();
+  onMcqWeightEntered(event: number | null, index: number): void {
+    const newWeights: (number | null)[] = this.model.mcqWeights.slice();
     newWeights[index] = event;
     this.triggerModelChange('mcqWeights', newWeights);
   }
@@ -124,8 +124,8 @@ export class McqQuestionEditDetailsFormComponent
    */
   triggerWeightsColumn(checked: boolean): void {
     this.triggerModelChangeBatch({
-      mcqWeights: checked ? Array(this.model.mcqChoices.length).fill(0) : [],
-      mcqOtherWeight: 0,
+      mcqWeights: checked ? Array(this.model.mcqChoices.length).fill(null) : [],
+      mcqOtherWeight: null,
       hasAssignedWeights: checked,
     });
   }
@@ -136,7 +136,7 @@ export class McqQuestionEditDetailsFormComponent
   triggerOtherEnabled(checked: boolean): void {
     this.triggerModelChangeBatch({
       otherEnabled: checked,
-      mcqOtherWeight: 0,
+      mcqOtherWeight: null,
     });
   }
 
