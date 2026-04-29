@@ -14,8 +14,8 @@ export class McqQuestionStatisticsCalculation
 
   answerFrequency: Record<string, number> = {};
   percentagePerOption: Record<string, number> = {};
-  weightPerOption: Record<string, number> = {};
-  weightedPercentagePerOption: Record<string, number> = {};
+  weightPerOption: Record<string, number | null> = {};
+  weightedPercentagePerOption: Record<string, number | null> = {};
   perRecipientResponses: Record<string, any> = {};
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
@@ -45,24 +45,30 @@ export class McqQuestionStatisticsCalculation
     if (this.question.hasAssignedWeights) {
       for (let i: number = 0; i < this.question.mcqChoices.length; i += 1) {
         const option: string = this.question.mcqChoices[i];
-        const weight: number = this.question.mcqWeights[i];
+        const weight: number | null = this.question.mcqWeights[i];
         this.weightPerOption[option] = weight;
       }
       if (this.question.otherEnabled) {
         this.weightPerOption['Other'] = this.question.mcqOtherWeight;
       }
 
-      let totalWeightedResponseCount: number = 0;
+      let totalWeightedResponseCount: number | null = 0;
       for (const answer of Object.keys(this.answerFrequency)) {
-        const weight: number = this.weightPerOption[answer];
-        const weightedAnswer: number = weight * this.answerFrequency[answer];
+        const weight: number | null = this.weightPerOption[answer];
+        if (weight === null) {
+          continue;
+        }
+        const weightedAnswer: number | null = weight * this.answerFrequency[answer];
         totalWeightedResponseCount += weightedAnswer;
       }
 
       for (const answer of Object.keys(this.weightPerOption)) {
-        const weight: number = this.weightPerOption[answer];
+        const weight: number | null = this.weightPerOption[answer];
+        if (weight === null) {
+          continue;
+        }
         const frequency: number = this.answerFrequency[answer];
-        const weightedPercentage: number = totalWeightedResponseCount === 0 ? 0
+        const weightedPercentage: number | null = totalWeightedResponseCount === 0 ? 0
             : 100 * ((frequency * weight) / totalWeightedResponseCount);
         this.weightedPercentagePerOption[answer] = +weightedPercentage.toFixed(2);
       }
@@ -94,14 +100,30 @@ export class McqQuestionStatisticsCalculation
         perRecipientResponse[response.recipient][answer] += 1;
       }
 
+      const areAllOptionWeightsNull: boolean = this.question.mcqWeights.every((weight) => weight === null);
+
       for (const recipient of Object.keys(perRecipientResponse)) {
+        if (areAllOptionWeightsNull) {
+          this.perRecipientResponses[recipient] = {
+            recipient,
+            recipientEmail: recipientEmails[recipient],
+            total: null,
+            average: null,
+            recipientTeam: recipientToTeam[recipient],
+            responses: perRecipientResponse[recipient],
+          };
+          continue;
+        }
         const responses: Record<string, number> = perRecipientResponse[recipient];
         let total: number = 0;
         let average: number = 0;
         let numOfResponsesForRecipient: number = 0;
         for (const answer of Object.keys(responses)) {
           const responseCount: number = responses[answer];
-          const weight: number = this.weightPerOption[answer];
+          const weight: number | null = this.weightPerOption[answer];
+          if (weight === null) {
+            continue;
+          }
           total += responseCount * weight;
           numOfResponsesForRecipient += responseCount;
         }
