@@ -117,6 +117,60 @@ describe('MsqQuestionStatisticsComponent', () => {
     expect(component.perRecipientResponses['charles@gmail.com'].average).toBe(0);
   });
 
+  it('should display zero weight as 0 and null weight as dash in summary table', () => {
+    component.question.msqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.msqWeights = [0, null, 3];
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMsqResponseDetails>[];
+
+    component.ngOnChanges();
+
+    // optionA has zero weight: must show 0, not dash
+    expect(component.summaryRowsData[0][1].value).toBe(0);
+    // optionB has null weight: must show dash, not 0 or 'null'
+    expect(component.summaryRowsData[1][1].value).toBe('-');
+    // optionC has numeric weight: shows as-is
+    expect(component.summaryRowsData[2][1].value).toBe(3);
+  });
+
+  it('should show dash in per-recipient column header for null weight option', () => {
+    component.question.msqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.msqWeights = [1, null, 3];
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMsqResponseDetails>[];
+
+    component.ngOnChanges();
+
+    // perRecipientColumnsData: [Team, Recipient, optionA, optionB, optionC, Total, Average]
+    // MSQ uses a space before the bracket: "option [weight]"
+    expect(component.perRecipientColumnsData[2].header).toBe('optionA [1.00]');
+    expect(component.perRecipientColumnsData[3].header).toBe('optionB [-]');
+    expect(component.perRecipientColumnsData[4].header).toBe('optionC [3.00]');
+  });
+
+  it('should calculate per-recipient total and average normally when some but not all selections have null weights', () => {
+    component.question.msqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.msqWeights = [1, null, 3];
+    // Alice→[optionA, optionB], Bob→[optionA], Charles→[""] (none of the above)
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMsqResponseDetails>[];
+
+    component.ngOnChanges();
+
+    // Alice chose optionA (weight 1) and optionB (null) — optionA still contributes
+    expect(component.perRecipientResponses['alice@gmail.com'].total).toBe(1);
+    expect(component.perRecipientResponses['alice@gmail.com'].average).toBe(1);
+    expect(component.perRecipientRowsData[0][5].value).toBe('1.00');
+    expect(component.perRecipientRowsData[0][6].value).toBe('1.00');
+
+    // Bob chose only optionA (weight 1) — calculates normally
+    expect(component.perRecipientResponses['bob@gmail.com'].total).toBe(1);
+    expect(component.perRecipientResponses['bob@gmail.com'].average).toBe(1);
+  });
+
   it('should calculate statistics correctly when there are no weights', () => {
     component.question.msqChoices = ['optionA', 'optionB', 'optionC'];
     component.question.otherEnabled = false;

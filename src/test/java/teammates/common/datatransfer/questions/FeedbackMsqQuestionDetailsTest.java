@@ -430,6 +430,77 @@ public class FeedbackMsqQuestionDetailsTest extends BaseTestCase {
     }
 
     @Test
+    public void testDeserialize_emptyStringAndNullInSameList_bothNormalizedToNull() {
+        String json = "{\"questionType\":\"MSQ\",\"msqChoices\":[\"A\",\"B\",\"C\",\"D\"],"
+                + "\"otherEnabled\":true,\"hasAssignedWeights\":true,"
+                + "\"msqWeights\":[1.5,\"\",null,2.0],\"msqOtherWeight\":\"\","
+                + "\"generateOptionsFor\":\"NONE\",\"maxSelectableChoices\":-2147483648,"
+                + "\"minSelectableChoices\":-2147483648}";
+
+        FeedbackMsqQuestionDetails msqDetails = JsonUtils.fromJson(json, FeedbackMsqQuestionDetails.class);
+
+        assertEquals(Arrays.asList(1.5, null, null, 2.0), msqDetails.getMsqWeights());
+        assertNull(msqDetails.getMsqOtherWeight());
+        assertTrue(msqDetails.validateQuestionDetails().isEmpty());
+    }
+
+    @Test
+    public void testDeserialize_zeroPreservedWhenNullAlsoPresent() {
+        String json = "{\"questionType\":\"MSQ\",\"msqChoices\":[\"ZeroWeight\",\"NullWeight\"],"
+                + "\"otherEnabled\":false,\"hasAssignedWeights\":true,"
+                + "\"msqWeights\":[0,null],\"msqOtherWeight\":0,"
+                + "\"generateOptionsFor\":\"NONE\",\"maxSelectableChoices\":-2147483648,"
+                + "\"minSelectableChoices\":-2147483648}";
+
+        FeedbackMsqQuestionDetails msqDetails = JsonUtils.fromJson(json, FeedbackMsqQuestionDetails.class);
+
+        assertEquals(Double.valueOf(0.0), msqDetails.getMsqWeights().get(0));
+        assertNull(msqDetails.getMsqWeights().get(1));
+        assertEquals(Double.valueOf(0.0), msqDetails.getMsqOtherWeight());
+    }
+
+    @Test
+    public void testValidateQuestionDetails_negativeWeightAlongWithNullWeights_errorReturned() {
+        FeedbackMsqQuestionDetails msqDetails = new FeedbackMsqQuestionDetails();
+        msqDetails.setMsqChoices(Arrays.asList("Choice 1", "Choice 2", "Choice 3"));
+        msqDetails.setHasAssignedWeights(true);
+        msqDetails.setMsqWeights(Arrays.asList(1.5, null, -2.0));
+
+        List<String> errors = msqDetails.validateQuestionDetails();
+
+        assertEquals(1, errors.size());
+        assertEquals(FeedbackMsqQuestionDetails.MSQ_ERROR_INVALID_WEIGHT, errors.get(0));
+    }
+
+    @Test
+    public void testValidateQuestionDetails_allNullWeightsWhenEnabled_noError() {
+        FeedbackMsqQuestionDetails msqDetails = new FeedbackMsqQuestionDetails();
+        msqDetails.setMsqChoices(Arrays.asList("Choice 1", "Choice 2"));
+        msqDetails.setHasAssignedWeights(true);
+        msqDetails.setOtherEnabled(true);
+        msqDetails.setMsqWeights(Arrays.asList(null, null));
+        msqDetails.setMsqOtherWeight(null);
+
+        List<String> errors = msqDetails.validateQuestionDetails();
+
+        assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void testValidateQuestionDetails_nullOtherWeightWhenOtherEnabled_noError() {
+        FeedbackMsqQuestionDetails msqDetails = new FeedbackMsqQuestionDetails();
+        msqDetails.setMsqChoices(Arrays.asList("Choice 1", "Choice 2"));
+        msqDetails.setHasAssignedWeights(true);
+        msqDetails.setOtherEnabled(true);
+        msqDetails.setMsqWeights(Arrays.asList(1.0, 2.0));
+        msqDetails.setMsqOtherWeight(null);
+
+        List<String> errors = msqDetails.validateQuestionDetails();
+
+        assertEquals(0, errors.size());
+    }
+
+    @Test
     public void testIsInstructorCommentsOnResponsesAllowed_shouldReturnTrue() {
         FeedbackQuestionDetails feedbackQuestionDetails = new FeedbackMsqQuestionDetails();
         assertTrue(feedbackQuestionDetails.isInstructorCommentsOnResponsesAllowed());

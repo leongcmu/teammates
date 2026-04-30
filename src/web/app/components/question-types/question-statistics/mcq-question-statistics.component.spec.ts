@@ -119,6 +119,64 @@ describe('McqQuestionStatisticsComponent', () => {
     expect(component.perRecipientRowsData[0][6].value).toBe('-');
   });
 
+  it('should display zero weight as 0 and null weight as dash in summary table', () => {
+    component.question.mcqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.mcqWeights = [0, null, 3];
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMcqResponseDetails>[];
+
+    component.ngOnChanges();
+
+    // optionA has zero weight: must show 0, not dash
+    expect(component.summaryRowsData[0][1].value).toBe(0);
+    // optionB has null weight: must show dash, not 0 or 'null'
+    expect(component.summaryRowsData[1][1].value).toBe('-');
+    // optionC has numeric weight: shows as-is
+    expect(component.summaryRowsData[2][1].value).toBe(3);
+  });
+
+  it('should show dash in per-recipient column header for null weight option', () => {
+    component.question.mcqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.mcqWeights = [1, null, 3];
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMcqResponseDetails>[];
+
+    component.ngOnChanges();
+
+    // perRecipientColumnsData: [Team, Recipient, optionA, optionB, optionC, Total, Average]
+    expect(component.perRecipientColumnsData[2].header).toBe('optionA[1.00]');
+    expect(component.perRecipientColumnsData[3].header).toBe('optionB[-]');
+    expect(component.perRecipientColumnsData[4].header).toBe('optionC[3.00]');
+  });
+
+  it('should calculate per-recipient total and average normally when none of the selections have null weights', () => {
+    component.question.mcqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.mcqWeights = [1, null, 3];
+    // Alice→optionA (weight 1), Bob→optionA (weight 1), Charles→optionB (null)
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMcqResponseDetails>[];
+
+    component.ngOnChanges();
+
+    // Alice and Bob chose optionA (weight 1) — should calculate normally
+    expect(component.perRecipientResponses['Alice'].total).toBe(1);
+    expect(component.perRecipientResponses['Alice'].average).toBe(1);
+    expect(component.perRecipientRowsData[0][5].value).toBe('1.00');
+    expect(component.perRecipientRowsData[0][6].value).toBe('1.00');
+
+    expect(component.perRecipientResponses['Bob'].total).toBe(1);
+    expect(component.perRecipientResponses['Bob'].average).toBe(1);
+
+    // Charles chose optionB (null weight) — should be dashes
+    expect(component.perRecipientResponses['Charles'].total).toBeNull();
+    expect(component.perRecipientResponses['Charles'].average).toBeNull();
+    expect(component.perRecipientRowsData[2][5].value).toBe('-');
+    expect(component.perRecipientRowsData[2][6].value).toBe('-');
+  });
+
   it('should calculate statistics correctly when there are no assigned weights', () => {
     component.question.mcqChoices = ['optionA', 'optionB', 'optionC'];
     component.question.otherEnabled = false;
