@@ -7,6 +7,7 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import teammates.common.datatransfer.FeedbackParticipantType;
+import teammates.common.util.JsonUtils;
 import teammates.test.BaseTestCase;
 
 /**
@@ -65,6 +66,35 @@ public class FeedbackMcqQuestionDetailsTest extends BaseTestCase {
 
         List<String> errors = mcqDetails.validateQuestionDetails();
         assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void testValidateQuestionDetails_emptyWeights_noValidationError() {
+        FeedbackMcqQuestionDetails mcqDetails = new FeedbackMcqQuestionDetails();
+        mcqDetails.setMcqChoices(Arrays.asList("Choice 1", "Choice 2"));
+        mcqDetails.setHasAssignedWeights(true);
+        mcqDetails.setOtherEnabled(true);
+        mcqDetails.setMcqWeights(Arrays.asList(1.22, null));
+        mcqDetails.setMcqOtherWeight(null);
+
+        List<String> errors = mcqDetails.validateQuestionDetails();
+
+        assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void testDeserialize_emptyStringWeights_emptyWeightsConvertedToNull() {
+        String json = "{\"questionType\":\"MCQ\",\"hasAssignedWeights\":true,"
+                + "\"mcqWeights\":[0,\"\",1.5],\"mcqOtherWeight\":\"\","
+                + "\"mcqChoices\":[\"Choice 1\",\"Choice 2\",\"Choice 3\"],"
+                + "\"otherEnabled\":true,\"questionDropdownEnabled\":false,"
+                + "\"generateOptionsFor\":\"NONE\"}";
+
+        FeedbackMcqQuestionDetails mcqDetails = JsonUtils.fromJson(json, FeedbackMcqQuestionDetails.class);
+
+        assertEquals(Arrays.asList(0.0, null, 1.5), mcqDetails.getMcqWeights());
+        assertNull(mcqDetails.getMcqOtherWeight());
+        assertTrue(mcqDetails.validateQuestionDetails().isEmpty());
     }
 
     @Test

@@ -16,15 +16,15 @@ export class WeightFieldComponent {
   isEditable: boolean = false;
 
   @Input()
-  weight: number = 1;
+  weight: number | null = 1;
 
   @Output()
-  weightEntered: EventEmitter<any> = new EventEmitter();
+  weightEntered: EventEmitter<number | null> = new EventEmitter();
 
   /**
    * Emit the weight entered to the parent component.
    */
-  onWeightEntered(weight: number): void {
+  onWeightEntered(weight: number | null): void {
     this.weightEntered.emit(weight);
   }
 }

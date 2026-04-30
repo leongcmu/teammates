@@ -19,7 +19,7 @@ export class FeedbackRubricQuestionDetailsImpl extends AbstractFeedbackQuestionD
   hasAssignedWeights: boolean = false;
   rubricChoices: string[] = [];
   rubricSubQuestions: string[] = [];
-  rubricWeightsForEachCell: number[][] = [];
+  rubricWeightsForEachCell: (number | null)[][] = [];
   rubricDescriptions: string[][] = [];
   questionText: string = '';
   questionType: FeedbackQuestionType = FeedbackQuestionType.RUBRIC;
@@ -160,7 +160,7 @@ ${statsCalculation.hasWeights
     return true;
   }
 
-  private getDisplayWeight(weight: number): any {
+  private getDisplayWeight(weight: number | null): string | number {
     return weight === null || weight === NO_VALUE ? '-' : weight;
   }
 }

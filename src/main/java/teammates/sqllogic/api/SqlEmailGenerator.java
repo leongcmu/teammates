@@ -450,18 +450,19 @@ public final class SqlEmailGenerator {
 
             for (var session : fsLogic.getFeedbackSessionsForCourseStartingAfter(courseId, searchStartTime)) {
                 RequestTracer.checkRemainingTime();
-                var submitUrlHtml = "";
+                if (!session.isOpened() && !session.isClosed()) {
+                    continue;
+                }
+
                 var reportUrlHtml = "";
 
-                if (session.isOpened() || session.isClosed()) {
-                    var submitUrl = Config.getFrontEndAppUrl(Const.WebPageURIs.SESSION_SUBMISSION_PAGE)
-                            .withCourseId(course.getId())
-                            .withSessionName(session.getName())
-                            .withFeedbackSessionId(session.getId().toString())
-                            .withRegistrationKey(student.getRegKey())
-                            .toAbsoluteString();
-                    submitUrlHtml = "[<a href=\"" + submitUrl + "\">submission link</a>]";
-                }
+                var submitUrl = Config.getFrontEndAppUrl(Const.WebPageURIs.SESSION_SUBMISSION_PAGE)
+                        .withCourseId(course.getId())
+                        .withSessionName(session.getName())
+                        .withFeedbackSessionId(session.getId().toString())
+                        .withRegistrationKey(student.getRegKey())
+                        .toAbsoluteString();
+                var submitUrlHtml = "[<a href=\"" + submitUrl + "\">submission link</a>]";
 
                 if (session.isPublished()) {
                     var reportUrl = Config.getFrontEndAppUrl(Const.WebPageURIs.SESSION_RESULTS_PAGE)
@@ -471,10 +472,6 @@ public final class SqlEmailGenerator {
                             .withRegistrationKey(student.getRegKey())
                             .toAbsoluteString();
                     reportUrlHtml = "[<a href=\"" + reportUrl + "\">result link</a>]";
-                }
-
-                if (submitUrlHtml.isEmpty() && reportUrlHtml.isEmpty()) {
-                    continue;
                 }
 
                 linksFragmentValue.append(Templates.populateTemplate(

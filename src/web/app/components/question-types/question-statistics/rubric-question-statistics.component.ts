@@ -165,7 +165,7 @@ export class RubricQuestionStatisticsComponent extends RubricQuestionStatisticsC
     });
   }
 
-  private getDisplayWeight(weight: number): any {
+  private getDisplayWeight(weight: number | null): string | number {
     return weight === null || weight === NO_VALUE ? '-' : weight;
   }
 }

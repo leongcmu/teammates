@@ -1,6 +1,8 @@
 package teammates.sqlui.webapi;
 
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static teammates.common.util.Const.InstructorPermissionRoleNames.INSTRUCTOR_PERMISSION_ROLE_OBSERVER;
 
@@ -8,12 +10,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
 
+import org.mockito.ArgumentCaptor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import teammates.common.datatransfer.FeedbackParticipantType;
 import teammates.common.datatransfer.InstructorPrivileges;
 import teammates.common.datatransfer.questions.FeedbackContributionQuestionDetails;
+import teammates.common.datatransfer.questions.FeedbackMsqQuestionDetails;
 import teammates.common.datatransfer.questions.FeedbackQuestionType;
 import teammates.common.datatransfer.questions.FeedbackTextQuestionDetails;
 import teammates.common.exception.InvalidParametersException;
@@ -151,6 +155,43 @@ public class UpdateFeedbackQuestionActionTest extends BaseActionTest<UpdateFeedb
 
         assertEquals(Arrays.asList(FeedbackVisibilityType.RECIPIENT), response.getShowRecipientNameTo());
         assertEquals(Arrays.asList(FeedbackParticipantType.RECEIVER), updatedQuestion.getShowRecipientNameTo());
+    }
+
+    @Test
+    void testExecute_msqQuestionWithEmptyStringWeights_success() throws Exception {
+        when(mockLogic.getFeedbackQuestion(typicalFeedbackQuestion.getId())).thenReturn(typicalFeedbackQuestion);
+
+        FeedbackQuestion updatedQuestion = getUpdatedFeedbackQuestion();
+        when(mockLogic.updateFeedbackQuestionCascade(any(UUID.class), any(FeedbackQuestionUpdateRequest.class)))
+                .thenReturn(updatedQuestion);
+        clearInvocations(mockLogic);
+
+        String requestBody = "{\"questionNumber\":2,\"questionBrief\":\"this is the brief\","
+                + "\"questionDescription\":\"this is the description\","
+                + "\"questionDetails\":{\"questionType\":\"MSQ\","
+                + "\"msqChoices\":[\"Choice 1\",\"Choice 2\",\"Choice 3\"],"
+                + "\"otherEnabled\":true,\"hasAssignedWeights\":true,"
+                + "\"msqWeights\":[0,\"\",1.5],\"msqOtherWeight\":\"\","
+                + "\"generateOptionsFor\":\"NONE\",\"maxSelectableChoices\":-2147483648,"
+                + "\"minSelectableChoices\":-2147483648},"
+                + "\"questionType\":\"MSQ\",\"giverType\":\"STUDENTS\",\"recipientType\":\"INSTRUCTORS\","
+                + "\"numberOfEntitiesToGiveFeedbackToSetting\":\"CUSTOM\","
+                + "\"customNumberOfEntitiesToGiveFeedbackTo\":2,"
+                + "\"showResponsesTo\":[],\"showGiverNameTo\":[],\"showRecipientNameTo\":[]}";
+        String[] params = {
+                Const.ParamsNames.FEEDBACK_QUESTION_ID, typicalFeedbackQuestion.getId().toString(),
+        };
+
+        UpdateFeedbackQuestionAction a = getAction(requestBody, null, params);
+        getJsonResult(a);
+
+        ArgumentCaptor<FeedbackQuestionUpdateRequest> requestCaptor =
+                ArgumentCaptor.forClass(FeedbackQuestionUpdateRequest.class);
+        verify(mockLogic).updateFeedbackQuestionCascade(any(UUID.class), requestCaptor.capture());
+        FeedbackMsqQuestionDetails questionDetails =
+                (FeedbackMsqQuestionDetails) requestCaptor.getValue().getQuestionDetails();
+        assertEquals(Arrays.asList(0.0, null, 1.5), questionDetails.getMsqWeights());
+        assertNull(questionDetails.getMsqOtherWeight());
     }
 
     @Test

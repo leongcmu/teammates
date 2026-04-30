@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 
 import teammates.common.datatransfer.FeedbackParticipantType;
 import teammates.common.util.Const;
+import teammates.common.util.JsonUtils;
 import teammates.test.AssertHelper;
 import teammates.test.BaseTestCase;
 
@@ -61,6 +62,36 @@ public class FeedbackMsqQuestionDetailsTest extends BaseTestCase {
 
         List<String> errors = msqDetails.validateQuestionDetails();
         assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void testValidateQuestionDetails_emptyWeights_noValidationError() {
+        FeedbackMsqQuestionDetails msqDetails = new FeedbackMsqQuestionDetails();
+
+        msqDetails.setMsqChoices(Arrays.asList("Choice 1", "Choice 2"));
+        msqDetails.setMsqWeights(Arrays.asList(1.22, null));
+        msqDetails.setOtherEnabled(true);
+        msqDetails.setHasAssignedWeights(true);
+        msqDetails.setMsqOtherWeight(null);
+
+        List<String> errors = msqDetails.validateQuestionDetails();
+
+        assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void testDeserialize_emptyStringWeights_emptyWeightsConvertedToNull() {
+        String json = "{\"questionType\":\"MSQ\",\"msqChoices\":[\"Choice 1\",\"Choice 2\",\"Choice 3\"],"
+                + "\"otherEnabled\":true,\"hasAssignedWeights\":true,"
+                + "\"msqWeights\":[0,\"\",1.5],\"msqOtherWeight\":\"\","
+                + "\"generateOptionsFor\":\"NONE\",\"maxSelectableChoices\":-2147483648,"
+                + "\"minSelectableChoices\":-2147483648}";
+
+        FeedbackMsqQuestionDetails msqDetails = JsonUtils.fromJson(json, FeedbackMsqQuestionDetails.class);
+
+        assertEquals(Arrays.asList(0.0, null, 1.5), msqDetails.getMsqWeights());
+        assertNull(msqDetails.getMsqOtherWeight());
+        assertTrue(msqDetails.validateQuestionDetails().isEmpty());
     }
 
     @Test

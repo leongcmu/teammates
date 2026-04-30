@@ -15,4 +15,12 @@ describe('WeightFieldComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should emit null for empty weight', () => {
+    const weightEnteredSpy: jest.SpyInstance = jest.spyOn(component.weightEntered, 'emit');
+
+    component.onWeightEntered(null);
+
+    expect(weightEnteredSpy).toHaveBeenCalledWith(null);
+  });
 });

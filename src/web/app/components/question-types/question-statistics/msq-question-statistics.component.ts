@@ -63,7 +63,7 @@ export class MsqQuestionStatisticsComponent extends MsqQuestionStatisticsCalcula
       { header: 'Recipient Name', sortBy: SortBy.MSQ_RECIPIENT_NAME },
       ...Object.keys(this.weightPerOption).map((key: string) => {
         return {
-          header: `${key} [${this.weightPerOption[key] === null ? '-' : (this.weightPerOption[key]).toFixed(2)}]`,
+          header: `${key} [${this.getDisplayWeight(this.weightPerOption[key])}]`,
           sortBy: SortBy.MSQ_OPTION_SELECTED_TIMES,
         };
       }),
@@ -98,6 +98,10 @@ export class MsqQuestionStatisticsComponent extends MsqQuestionStatisticsCalcula
         },
       ];
     });
+  }
+
+  private getDisplayWeight(weight: number | null): string {
+    return weight === null ? '-' : weight.toFixed(2);
   }
 
 }

@@ -100,7 +100,8 @@ export class McqQuestionStatisticsCalculation
         perRecipientResponse[response.recipient][answer] += 1;
       }
 
-      const areAllOptionWeightsNull: boolean = this.question.mcqWeights.every((weight) => weight === null);
+      const areAllOptionWeightsNull: boolean =
+          Object.values(this.weightPerOption).every((weight: number | null) => weight === null);
 
       for (const recipient of Object.keys(perRecipientResponse)) {
         if (areAllOptionWeightsNull) {
@@ -116,10 +117,12 @@ export class McqQuestionStatisticsCalculation
         }
         const responses: Record<string, number> = perRecipientResponse[recipient];
         let total: number = 0;
-        let average: number = 0;
+        let average: number | null = 0;
+        let numOfSelectedResponsesForRecipient: number = 0;
         let numOfResponsesForRecipient: number = 0;
         for (const answer of Object.keys(responses)) {
           const responseCount: number = responses[answer];
+          numOfSelectedResponsesForRecipient += responseCount;
           const weight: number | null = this.weightPerOption[answer];
           if (weight === null) {
             continue;
@@ -127,13 +130,17 @@ export class McqQuestionStatisticsCalculation
           total += responseCount * weight;
           numOfResponsesForRecipient += responseCount;
         }
-        average = numOfResponsesForRecipient ? total / numOfResponsesForRecipient : 0;
+        if (numOfSelectedResponsesForRecipient > 0 && numOfResponsesForRecipient === 0) {
+          average = null;
+        } else {
+          average = numOfResponsesForRecipient ? total / numOfResponsesForRecipient : 0;
+        }
 
         this.perRecipientResponses[recipient] = {
           recipient,
           recipientEmail: recipientEmails[recipient],
-          total: +total.toFixed(5),
-          average: +average.toFixed(2),
+          total: average === null ? null : +total.toFixed(5),
+          average: average === null ? null : +average.toFixed(2),
           recipientTeam: recipientToTeam[recipient],
           responses: perRecipientResponse[recipient],
         };

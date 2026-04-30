@@ -22,10 +22,10 @@ export abstract class AbstractFeedbackMcqMsqQuestionDetails extends AbstractFeed
       if (hasAssignedWeights) {
         statsRows.push([
           answer,
-          String(statsCalculation.weightPerOption[answer]),
+          this.getDisplayWeight(statsCalculation.weightPerOption[answer]),
           String(statsCalculation.answerFrequency[answer]),
           String(statsCalculation.percentagePerOption[answer]),
-          String(statsCalculation.weightedPercentagePerOption[answer]),
+          this.getDisplayWeight(statsCalculation.weightedPercentagePerOption[answer]),
         ]);
       } else {
         statsRows.push([
@@ -46,7 +46,7 @@ export abstract class AbstractFeedbackMcqMsqQuestionDetails extends AbstractFeed
     statsRows.push([
       'Team', 'Recipient Name',
       ...Object.keys(statsCalculation.weightPerOption)
-          .map((choice: string) => `${choice} [${statsCalculation.weightPerOption[choice]}]`),
+          .map((choice: string) => `${choice} [${this.getDisplayWeight(statsCalculation.weightPerOption[choice])}]`),
       'Total', 'Average']);
 
     Object.keys(statsCalculation.perRecipientResponses).sort().forEach((recipient: string) => {
@@ -56,11 +56,15 @@ export abstract class AbstractFeedbackMcqMsqQuestionDetails extends AbstractFeed
         recipientResponses.recipient,
         ...Object.keys(statsCalculation.weightPerOption)
             .map((choice: string) => String(recipientResponses.responses[choice])),
-        String(recipientResponses.total),
-        String(recipientResponses.average),
+        this.getDisplayWeight(recipientResponses.total),
+        this.getDisplayWeight(recipientResponses.average),
       ]);
     });
 
     return statsRows;
+  }
+
+  private getDisplayWeight(weight: number | null | undefined): string {
+    return weight == null ? '-' : String(weight);
   }
 }

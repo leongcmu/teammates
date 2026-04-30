@@ -82,6 +82,41 @@ describe('MsqQuestionStatisticsComponent', () => {
     expect(component.perRecipientResponses).toEqual(expectedPerRecipientResponses);
   });
 
+  it('should skip empty weights when calculating statistics', () => {
+    component.question.msqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.msqWeights = [1, null, 3];
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMsqResponseDetails>[];
+
+    component.calculateStatistics();
+
+    expect(component.weightPerOption).toEqual({ optionA: 1, optionB: null, optionC: 3 });
+    expect(component.weightedPercentagePerOption).toEqual({ optionA: 100, optionC: 0 });
+
+    component.ngOnChanges();
+
+    expect(component.summaryRowsData[1][1].value).toBe('-');
+    expect(component.summaryRowsData[1][4].value).toBe('-');
+  });
+
+  it('should use dashes for per-recipient totals when all selected weights are empty', () => {
+    component.question.msqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.msqWeights = [null, null, 3];
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMsqResponseDetails>[];
+
+    component.ngOnChanges();
+
+    expect(component.perRecipientResponses['alice@gmail.com'].total).toBeNull();
+    expect(component.perRecipientResponses['alice@gmail.com'].average).toBeNull();
+    expect(component.perRecipientRowsData[0][5].value).toBe('-');
+    expect(component.perRecipientRowsData[0][6].value).toBe('-');
+    expect(component.perRecipientResponses['charles@gmail.com'].total).toBe(0);
+    expect(component.perRecipientResponses['charles@gmail.com'].average).toBe(0);
+  });
+
   it('should calculate statistics correctly when there are no weights', () => {
     component.question.msqChoices = ['optionA', 'optionB', 'optionC'];
     component.question.otherEnabled = false;

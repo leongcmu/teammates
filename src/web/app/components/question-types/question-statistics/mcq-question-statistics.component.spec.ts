@@ -82,6 +82,43 @@ describe('McqQuestionStatisticsComponent', () => {
     expect(component.perRecipientResponses).toEqual(expectedPerRecipientResponses);
   });
 
+  it('should skip empty weights when calculating statistics', () => {
+    component.question.mcqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.mcqWeights = [1, null, 3];
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMcqResponseDetails>[];
+
+    component.calculateStatistics();
+
+    expect(component.weightPerOption).toEqual({ optionA: 1, optionB: null, optionC: 3 });
+    expect(component.weightedPercentagePerOption).toEqual({ optionA: 100, optionC: 0 });
+
+    component.ngOnChanges();
+
+    expect(component.summaryRowsData[1][1].value).toBe('-');
+    expect(component.summaryRowsData[1][4].value).toBe('-');
+    expect(component.perRecipientResponses['Charles'].total).toBeNull();
+    expect(component.perRecipientResponses['Charles'].average).toBeNull();
+    expect(component.perRecipientRowsData[2][5].value).toBe('-');
+    expect(component.perRecipientRowsData[2][6].value).toBe('-');
+  });
+
+  it('should use dashes for per-recipient totals when all weights are empty', () => {
+    component.question.mcqChoices = ['optionA', 'optionB', 'optionC'];
+    component.question.otherEnabled = false;
+    component.question.hasAssignedWeights = true;
+    component.question.mcqWeights = [null, null, null];
+    component.responses = ResponseTestData.responsesNoOther as Response<FeedbackMcqResponseDetails>[];
+
+    component.ngOnChanges();
+
+    expect(component.perRecipientResponses['Alice'].total).toBeNull();
+    expect(component.perRecipientResponses['Alice'].average).toBeNull();
+    expect(component.perRecipientRowsData[0][5].value).toBe('-');
+    expect(component.perRecipientRowsData[0][6].value).toBe('-');
+  });
+
   it('should calculate statistics correctly when there are no assigned weights', () => {
     component.question.mcqChoices = ['optionA', 'optionB', 'optionC'];
     component.question.otherEnabled = false;

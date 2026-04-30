@@ -3,6 +3,9 @@ package teammates.common.datatransfer.questions;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
+
 import teammates.common.datatransfer.FeedbackParticipantType;
 import teammates.storage.sqlentity.FeedbackQuestion;
 
@@ -19,14 +22,15 @@ public class FeedbackMcqQuestionDetails extends FeedbackQuestionDetails {
             " is not a valid option for the " + QUESTION_TYPE_NAME + ".";
     static final String MCQ_ERROR_INVALID_WEIGHT =
             "The weights for the choices of a " + QUESTION_TYPE_NAME
-                    + " must be valid non-negative numbers with precision up to 2 decimal places.";
+                    + " must be valid non-negative numbers with precision up to 2 decimal places, or empty.";
     static final String MCQ_ERROR_EMPTY_MCQ_OPTION = "The MCQ options cannot be empty";
     static final String MCQ_ERROR_OTHER_CONTENT_NOT_PROVIDED = "No text provided for other option";
     static final String MCQ_ERROR_DUPLICATE_MCQ_OPTION = "The MCQ options cannot be duplicate";
 
     private boolean hasAssignedWeights;
     private List<Double> mcqWeights;
-    private double mcqOtherWeight;
+    @JsonInclude(JsonInclude.Include.ALWAYS)
+    private Double mcqOtherWeight;
     private List<String> mcqChoices;
     private boolean otherEnabled;
     private boolean questionDropdownEnabled;
@@ -43,7 +47,7 @@ public class FeedbackMcqQuestionDetails extends FeedbackQuestionDetails {
         this.mcqChoices = new ArrayList<>();
         this.otherEnabled = false;
         this.questionDropdownEnabled = false;
-        this.mcqOtherWeight = 0;
+        this.mcqOtherWeight = 0.0;
         this.generateOptionsFor = FeedbackParticipantType.NONE;
     }
 
@@ -90,13 +94,13 @@ public class FeedbackMcqQuestionDetails extends FeedbackQuestionDetails {
 
             // If weights are not enabled, but weight list is not empty or otherWeight is not 0
             // In that case, trigger this error.
-            if (!hasAssignedWeights && (!mcqWeights.isEmpty() || mcqOtherWeight != 0)) {
+            if (!hasAssignedWeights && (!mcqWeights.isEmpty() || isNonZeroWeight(mcqOtherWeight))) {
                 errors.add(MCQ_ERROR_INVALID_WEIGHT);
             }
 
             // If weights are enabled, but other option is disabled, and mcqOtherWeight is not 0
             // In that case, trigger this error.
-            if (hasAssignedWeights && !otherEnabled && mcqOtherWeight != 0) {
+            if (hasAssignedWeights && !otherEnabled && isNonZeroWeight(mcqOtherWeight)) {
                 errors.add(MCQ_ERROR_INVALID_WEIGHT);
             }
 
@@ -110,7 +114,7 @@ public class FeedbackMcqQuestionDetails extends FeedbackQuestionDetails {
 
             // If 'Other' option is enabled, and other weight has negative value,
             // trigger this error.
-            if (hasAssignedWeights && otherEnabled && mcqOtherWeight < 0) {
+            if (hasAssignedWeights && otherEnabled && mcqOtherWeight != null && mcqOtherWeight < 0) {
                 errors.add(MCQ_ERROR_INVALID_WEIGHT);
             }
 
@@ -123,6 +127,10 @@ public class FeedbackMcqQuestionDetails extends FeedbackQuestionDetails {
         }
 
         return errors;
+    }
+
+    private boolean isNonZeroWeight(Double weight) {
+        return weight != null && weight != 0;
     }
 
     @Override
@@ -163,16 +171,51 @@ public class FeedbackMcqQuestionDetails extends FeedbackQuestionDetails {
         return mcqWeights;
     }
 
-    public void setMcqWeights(List<Double> mcqWeights) {
-        this.mcqWeights = mcqWeights;
+    @JsonSetter("mcqWeights")
+    public void setMcqWeights(List<?> mcqWeights) {
+        this.mcqWeights = normalizeWeights(mcqWeights);
     }
 
-    public double getMcqOtherWeight() {
+    public Double getMcqOtherWeight() {
         return mcqOtherWeight;
+    }
+
+    @JsonSetter("mcqOtherWeight")
+    public void setMcqOtherWeight(Object mcqOtherWeight) {
+        this.mcqOtherWeight = normalizeWeight(mcqOtherWeight);
     }
 
     public void setMcqOtherWeight(double mcqOtherWeight) {
         this.mcqOtherWeight = mcqOtherWeight;
+    }
+
+    private List<Double> normalizeWeights(List<?> weights) {
+        if (weights == null) {
+            return new ArrayList<>();
+        }
+
+        List<Double> normalizedWeights = new ArrayList<>();
+        weights.stream()
+                .map(FeedbackMcqQuestionDetails::normalizeWeight)
+                .forEach(normalizedWeights::add);
+        return normalizedWeights;
+    }
+
+    private static Double normalizeWeight(Object weight) {
+        if (weight == null) {
+            return null;
+        }
+
+        if (weight instanceof Number) {
+            return ((Number) weight).doubleValue();
+        }
+
+        if (weight instanceof String) {
+            String trimmedWeight = ((String) weight).trim();
+            return trimmedWeight.isEmpty() ? null : Double.parseDouble(trimmedWeight);
+        }
+
+        throw new NumberFormatException("Unsupported weight value: " + weight);
     }
 
     public int getNumOfMcqChoices() {

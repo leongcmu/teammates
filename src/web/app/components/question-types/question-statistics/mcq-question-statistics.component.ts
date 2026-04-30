@@ -67,7 +67,7 @@ export class McqQuestionStatisticsComponent extends McqQuestionStatisticsCalcula
       { header: 'Recipient Name', sortBy: SortBy.MCQ_RECIPIENT_NAME },
       ...Object.keys(this.weightPerOption).map((key: string) => {
         return {
-          header: `${key}[${this.weightPerOption[key] === null ? '-' : (this.weightPerOption[key]).toFixed(2)}]`,
+          header: `${key}[${this.getDisplayWeight(this.weightPerOption[key])}]`,
           sortBy: SortBy.MCQ_OPTION_SELECTED_TIMES,
         };
       }),
@@ -102,5 +102,9 @@ export class McqQuestionStatisticsComponent extends McqQuestionStatisticsCalcula
         },
       ];
     });
+  }
+
+  private getDisplayWeight(weight: number | null): string {
+    return weight === null ? '-' : weight.toFixed(2);
   }
 }

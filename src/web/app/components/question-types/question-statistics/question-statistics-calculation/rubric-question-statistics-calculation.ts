@@ -36,7 +36,7 @@ export class RubricQuestionStatisticsCalculation
   subQuestions: string[] = [];
   choices: string[] = [];
   hasWeights: boolean = false;
-  weights: number[][] = [];
+  weights: (number | null)[][] = [];
   answers: number[][] = [];
   isWeightStatsVisible: boolean = false;
 
@@ -129,9 +129,10 @@ export class RubricQuestionStatisticsCalculation
           continue;
         }
         this.perRecipientStatsMap[response.recipientEmail || response.recipient].answers[i][subAnswer] += 1;
-        if (this.weights[i][subAnswer] !== null) {
+        const weight: number | null = this.weights[i][subAnswer];
+        if (weight !== null) {
             this.perRecipientStatsMap[response.recipientEmail || response.recipient].subQuestionTotalChosenWeight[i] +=
-                +this.weights[i][subAnswer].toFixed(5);
+                +weight.toFixed(5);
             this.perRecipientStatsMap[
                 response.recipientEmail || response.recipient].areSubQuestionChosenWeightsAllNull[i] = false;
         }
@@ -213,12 +214,13 @@ export class RubricQuestionStatisticsCalculation
   }
 
   // Calculate sum of non-null values for each column
-  private sumValidValuesByColumn(matrix: number[][]): number[] {
+  private sumValidValuesByColumn(matrix: (number | null)[][]): number[] {
     const sums: number[] = [];
     for (let c: number = 0; c < matrix[0].length; c += 1) {
       let sum: number = 0;
       for (let r: number = 0; r < matrix.length; r += 1) {
-        sum += matrix[r][c] === null ? 0 : matrix[r][c];
+        const value: number | null = matrix[r][c];
+        sum += value === null ? 0 : value;
       }
       sums[c] = sum;
     }
@@ -226,12 +228,13 @@ export class RubricQuestionStatisticsCalculation
   }
 
   // Count number of non-null values for each column
-  private countValidValuesByColumn(matrix: number[][]): number[] {
+  private countValidValuesByColumn(matrix: (number | null)[][]): number[] {
     const counts: number[] = [];
     for (let c: number = 0; c < matrix[0].length; c += 1) {
       let count: number = 0;
       for (let r: number = 0; r < matrix.length; r += 1) {
-        count += matrix[r][c] === null ? 0 : 1;
+        const value: number | null = matrix[r][c];
+        count += value === null ? 0 : 1;
       }
       counts[c] = count;
     }
@@ -239,7 +242,7 @@ export class RubricQuestionStatisticsCalculation
   }
 
   // Calculate non-null weight average for each column
-  private calculateWeightsAverage(weights: number[][]): number[] {
+  private calculateWeightsAverage(weights: (number | null)[][]): number[] {
     const sums: number[] = this.sumValidValuesByColumn(weights);
     const counts: number[] = this.countValidValuesByColumn(weights);
     const averages: number[] = [];

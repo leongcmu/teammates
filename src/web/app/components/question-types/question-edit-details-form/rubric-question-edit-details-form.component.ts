@@ -65,8 +65,9 @@ export class RubricQuestionEditDetailsFormComponent
   /**
    * Triggers change of rubric weight.
    */
-  triggerRubricWeightChange(value: number, row: number, col: number): void {
-    const newWeightsForEachCell: number[][] = this.model.rubricWeightsForEachCell.map((arr: number[]) => arr.slice());
+  triggerRubricWeightChange(value: number | null, row: number, col: number): void {
+    const newWeightsForEachCell: (number | null)[][] =
+        this.model.rubricWeightsForEachCell.map((arr: (number | null)[]) => arr.slice());
     newWeightsForEachCell[row][col] = value;
 
     this.triggerModelChange('rubricWeightsForEachCell', newWeightsForEachCell);
@@ -83,9 +84,9 @@ export class RubricQuestionEditDetailsFormComponent
     newDescriptions.push(Array(this.model.rubricChoices.length).fill(''));
 
     // update weights
-    let newWeightsForEachCell: number[][] = [];
+    let newWeightsForEachCell: (number | null)[][] = [];
     if (this.model.hasAssignedWeights) {
-      newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: number[]) => arr.slice());
+      newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: (number | null)[]) => arr.slice());
       newWeightsForEachCell.push(Array(this.model.rubricChoices.length).fill(0));
     }
 
@@ -109,9 +110,9 @@ export class RubricQuestionEditDetailsFormComponent
     }
 
     // update weights
-    let newWeightsForEachCell: number[][] = [];
+    let newWeightsForEachCell: (number | null)[][] = [];
     if (this.model.hasAssignedWeights) {
-      newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: number[]) => arr.slice());
+      newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: (number | null)[]) => arr.slice());
 
       for (const row of newWeightsForEachCell) {
         row.push(0);
@@ -138,9 +139,9 @@ export class RubricQuestionEditDetailsFormComponent
     }
 
     // update weights
-    let newWeightsForEachCell: number[][] = [];
+    let newWeightsForEachCell: (number | null)[][] = [];
     if (this.model.hasAssignedWeights) {
-      newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: number[]) => arr.slice());
+      newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: (number | null)[]) => arr.slice());
 
       for (const row of newWeightsForEachCell) {
         moveItemInArray(row, from, to);
@@ -173,9 +174,10 @@ export class RubricQuestionEditDetailsFormComponent
           newDescriptions.splice(index, 1);
 
       // update weights
-          let newWeightsForEachCell: number[][] = [];
+          let newWeightsForEachCell: (number | null)[][] = [];
           if (this.model.hasAssignedWeights) {
-            newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: number[]) => arr.slice());
+            newWeightsForEachCell =
+                this.model.rubricWeightsForEachCell.map((arr: (number | null)[]) => arr.slice());
 
             newWeightsForEachCell.splice(index, 1);
           }
@@ -205,10 +207,10 @@ export class RubricQuestionEditDetailsFormComponent
           });
 
       // update weights
-          let newWeightsForEachCell: number[][] = [];
+          let newWeightsForEachCell: (number | null)[][] = [];
           if (this.model.hasAssignedWeights) {
-            newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: number[]) => {
-              const newArr: number[] = arr.slice();
+            newWeightsForEachCell = this.model.rubricWeightsForEachCell.map((arr: (number | null)[]) => {
+              const newArr: (number | null)[] = arr.slice();
               newArr.splice(index, 1);
               return newArr;
             });
@@ -244,7 +246,7 @@ export class RubricQuestionEditDetailsFormComponent
     moveItemInArray(newDescriptions, from, to);
 
     // update weights
-    let newWeights: number[][] = [];
+    let newWeights: (number | null)[][] = [];
     if (this.model.hasAssignedWeights) {
       newWeights = this.model.rubricWeightsForEachCell.slice();
       moveItemInArray(newWeights, from, to);
